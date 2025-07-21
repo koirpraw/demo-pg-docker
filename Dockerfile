@@ -1,33 +1,38 @@
-# Use the official Node.js runtime as the base image
-FROM node:18-alpine
+FROM node:22-alpine
 
-# Set the working directory inside the container
-WORKDIR /app
+# Installing dependencies for potential native modules
+RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev nasm bash vips-dev git
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Set environment
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+# Set working directory
+WORKDIR /opt/app
+
+# Copy package files
+COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install -g node-gyp
+RUN npm config set fetch-retry-maxtimeout 600000 -g && npm ci --only=production
 
-# Copy the rest of the application code
+# Copy application code
 COPY . .
 
-# Create a non-root user to run the application
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Create non-root user and set permissions
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /opt/app
 
-# Change ownership of the app directory to the nodejs user
-RUN chown -R nodejs:nodejs /app
 USER nodejs
 
-# Expose the port the app runs on
+# Expose port
 EXPOSE 3000
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-
-# Define the command to run the application
+# Start the application
 CMD ["npm", "start"]

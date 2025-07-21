@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=${HOST}
+      - USERDB=${USERDB}
+      - PASSWORD=${PASSWORD}
+      - DB=${DB}
+      - DB_PORT=${DB_PORT}
+    restart: unless-stopped
+
+#   postgres:
+#     image: postgres:15-alpine
+#     environment:
+#       POSTGRES_HOST: ${HOST}
+#       POSTGRES_DB: ${DB}
+#       POSTGRES_USER: ${USERDB}
+#       POSTGRES_PASSWORD: ${PASSWORD}
+#     ports:
+#       - "5433:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     restart: unless-stopped
+
+# volumes:
+#   postgres_data:
+
+

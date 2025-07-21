@@ -13,20 +13,27 @@ const pool = new Pool({
     connectionTimeoutMillis: 5000,
 });
 
-// Test the connection with retry logic
-const testConnection = async () => {
-    try {
-        const client = await pool.connect();
-        console.log("Successfully connected to the PostgreSQL Database.");
-        client.release();
-    } catch (error) {
-        console.error('Database connection failed:', error.message);
-        console.error('Host:', process.env.HOST);
-        console.error('User:', process.env.USERDB);
-        console.error('Database:', process.env.DB);
-        console.error('Port:', process.env.DB_PORT);
-        // Don't exit the process, let the app start even if DB is temporarily unavailable
+const testConnection = async (retries = 5, delay = 5000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const client = await pool.connect();
+            console.log("Successfully connected to the PostgreSQL Database.");
+            client.release();
+            return;
+        } catch (error) {
+            console.error(`Database connection attempt ${i + 1} failed:`, error.message);
+            console.error('Host:', process.env.HOST);
+            console.error('User:', process.env.USERDB);
+            console.error('Database:', process.env.DB);
+            console.error('Port:', process.env.DB_PORT);
+
+            if (i < retries - 1) {
+                console.log(`Retrying in ${delay / 1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
     }
+    console.error('Failed to connect to database after all retries');
 };
 
 // Test connection on startup

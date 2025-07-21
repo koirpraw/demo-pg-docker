@@ -4,6 +4,7 @@ const router = express.Router();
 
 
 router.get('/', articleController.findAll);
-// router.get('/:id', articleController.getArticleById);
+router.get('/:id', articleController.findById); // Fixed: changed from getArticleById to findById
+
 
 module.exports = router;
